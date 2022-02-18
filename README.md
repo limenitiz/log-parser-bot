@@ -11,3 +11,7 @@
     pip install discord.py
 >
     pip install python-decouple
+
+#### Run
+    python main.py
+
