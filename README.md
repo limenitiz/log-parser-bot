@@ -18,3 +18,18 @@
 #### Run
     python main.py
 
+### Command examples
+---
+    --get-visitors-channel-datetime Общий "2022-02-10 00:00" "2022-02-17 23:59"
+>
+    --get-1 Общий "2022-02-10 00:00" "2022-02-17 23:59"
+--- 
+    --get-visitors-channel-today Общий
+>
+    --get-2 Основной
+---
+    --get-visitors-channel-day Общий 17
+>
+    --get-3 Общий 17
+---
+
