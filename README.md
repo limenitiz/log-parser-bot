@@ -20,16 +20,19 @@
 
 ### Command examples
 ---
+#### Command
     --get-visitors-channel-datetime Общий "2022-02-10 00:00" "2022-02-17 23:59"
->
+#### Calling the previous command (Short name for command)
     --get-1 Общий "2022-02-10 00:00" "2022-02-17 23:59"
 --- 
+#### Command
     --get-visitors-channel-today Общий
->
+#### Calling the previous command (Short name for command)
     --get-2 Основной
 ---
+#### Command
     --get-visitors-channel-day Общий 17
->
+#### Calling the previous command (Short name for command)
     --get-3 Общий 17
 ---
 
