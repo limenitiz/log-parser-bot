@@ -61,8 +61,8 @@ async def parse_message(ctx: Context, message: Message) -> [VisitInfo]:
     # **<@!000000000000000001> switched voice channel `#Name2` -> `#Name3`**
     # **<@!000000000000000001> left voice channel <#000000000000000003>**
 
-    # text = str(message.embeds[0].description)
-    text = str(message.content)
+    text = str(message.embeds[0].description)
+    # text = str(message.content)
 
     user_id = int(re.search(r"@!\d+", text).group(0).replace("@!", ""))
     message_datetime = message.created_at.replace(hour=message.created_at.hour+3)
