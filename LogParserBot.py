@@ -61,10 +61,11 @@ async def parse_message(ctx: Context, message: Message) -> [VisitInfo]:
     # **<@!000000000000000001> switched voice channel `#Name2` -> `#Name3`**
     # **<@!000000000000000001> left voice channel <#000000000000000003>**
 
-    text = str(message.embeds[0].description)
-    # text = str(message.content)
+    # text = str(message.embeds[0].description)
+    text = str(message.content)
 
     user_id = int(re.search(r"@!\d+", text).group(0).replace("@!", ""))
+    message_datetime = message.created_at.replace(hour=message.created_at.hour+3)
 
     try:
         user = await ctx.guild.fetch_member(user_id)
@@ -84,14 +85,14 @@ async def parse_message(ctx: Context, message: Message) -> [VisitInfo]:
             .replace('-> ', '')\
             .replace('#', '')
 
-        return [VisitInfo(user_id, user_display_name, "left", channel_from, message.created_at),
-                VisitInfo(user_id, user_display_name, "joined", channel_to, message.created_at)]
+        return [VisitInfo(user_id, user_display_name, "left", channel_from, message_datetime),
+                VisitInfo(user_id, user_display_name, "joined", channel_to, message_datetime)]
 
     if visit_type == "joined" or visit_type == "left":
         channel_id = int(re.search(r"#\d+", text).group(0).replace("#", ""))
         channel_name = str(ctx.bot.get_channel(channel_id).name)
 
-        return [VisitInfo(user_id, user_display_name, visit_type, channel_name, message.created_at)]
+        return [VisitInfo(user_id, user_display_name, visit_type, channel_name, message_datetime)]
 
 
 class LogParserBot(commands.Bot):
@@ -121,7 +122,7 @@ class LogParserCog(commands.Cog):
             year=components[0],
             month=components[1],
             day=components[2],
-            hour=components[3],
+            hour=components[3] - 3,  # cast to utf timezone
             minute=components[4]
         )
 
@@ -130,7 +131,7 @@ class LogParserCog(commands.Cog):
             year=components[0],
             month=components[1],
             day=components[2],
-            hour=components[3],
+            hour=components[3] - 3,  # cast to utf timezone
             minute=components[4]
         )
 
