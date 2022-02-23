@@ -47,16 +47,24 @@ async def get_messages(channel: TextChannel, after: datetime, before: datetime):
     return await channel.history(after=after, before=before).flatten()
 
 
-async def parse_message(ctx: Context, message: Message):
+async def parse_message(ctx: Context, message: Message) -> [VisitInfo]:
     """Parse message using regexp
     :param ctx: Context
     :param message: Message
-    :return: user_id, user_display_name, type_visit, channel_name, message_datetime
+    :return: if (joined or left) => [VisitInfo]; 
+             if (switched) => [VisitInfo, VisitInfo];
+             swithed separate on join and left
     """
-    text = str(message.clean_content)
-    user_id = int(re.search("ID: \d*", text).group(0).replace("ID: ", ""))
-    type_visit = str(re.search("joined|left", text).group(0))
-    channel_name = str(re.search("channel \w*", text).group(0).replace("channel ", ""))
+
+    # example messages:
+    # **<@!000000000000000001> joined voice channel <#000000000000000002>**
+    # **<@!000000000000000001> switched voice channel `#Name2` -> `#Name3`**
+    # **<@!000000000000000001> left voice channel <#000000000000000003>**
+
+    text = str(message.embeds[0].description)
+    # text = str(message.content)
+
+    user_id = int(re.search(r"@!\d+", text).group(0).replace("@!", ""))
 
     try:
         user = await ctx.guild.fetch_member(user_id)
@@ -64,7 +72,26 @@ async def parse_message(ctx: Context, message: Message):
     except NotFound:
         user_display_name = 'NotFoundOnServer'
 
-    return user_id, user_display_name, type_visit, channel_name, message.created_at
+    visit_type = str(re.search("joined|left|switched", text).group(0))
+
+    if visit_type == "switched":
+        channel_from = re.search(r"`#.+` ->", text).group(0)\
+            .replace('`', '')\
+            .replace(' ->', '')\
+            .replace('#', '')
+        channel_to   = re.search(r"-> `#.+`", text).group(0)\
+            .replace('`', '')\
+            .replace('-> ', '')\
+            .replace('#', '')
+
+        return [VisitInfo(user_id, user_display_name, "left", channel_from, message.created_at),
+                VisitInfo(user_id, user_display_name, "joined", channel_to, message.created_at)]
+
+    if visit_type == "joined" or visit_type == "left":
+        channel_id = int(re.search(r"#\d+", text).group(0).replace("#", ""))
+        channel_name = str(ctx.bot.get_channel(channel_id).name)
+
+        return [VisitInfo(user_id, user_display_name, visit_type, channel_name, message.created_at)]
 
 
 class LogParserBot(commands.Bot):
@@ -111,10 +138,10 @@ class LogParserCog(commands.Cog):
         visit_list = list()
         # которые соответствуют временному промежутку after_datetime ~ before_datetime
         for message in await get_messages(channel, after_datetime, before_datetime):
-            parsed_message = await parse_message(ctx, message)
-            visit = VisitInfo(*parsed_message)
-            if visit.channel_name == channel_name:
-                visit_list.append(visit)
+            visits = await parse_message(ctx, message)
+            for visit in visits:
+                if visit.channel_name == channel_name:
+                    visit_list.append(visit)
 
         # затем он сортируется по user_id
         visit_list.sort(key=lambda x: x.user_id, reverse=True)
@@ -190,3 +217,4 @@ class LogParserCog(commands.Cog):
         await self.get_visitors_day(ctx, channel_name, day)
 
 
+# todo: fix time
